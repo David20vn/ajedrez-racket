@@ -1,0 +1,576 @@
+#lang racket
+
+(require graphics/graphics)
+(open-graphics )
+(define tablero (open-viewport "Ajedrez" 900 600))
+
+( define ( Board counter p x1 y1 x2 y2 )
+   ( define ( Lines counter x y )                                                                                   ; inicio funcion para el tablero
+             ( if( < counter 4 )
+                ( begin
+                  (( draw-solid-rectangle tablero ) ( make-posn x y ) 75 75 "gray" )
+                  ( Lines ( + 1 counter ) ( + 150 x ) y ) 
+                  ) 
+                ;else
+             ( void )
+             ) ;fin (if(< counter 4)
+     );fin funcion Lines
+   ( if ( < counter 8 )
+        ( begin
+           ( if ( = p 1 )
+                (Lines 0 x1 y1 )
+           ;else
+                ( Lines 0 x2 y2 )
+        ) ;fin ( if ( = p 1 )
+   ( Board ( + counter 1 ) ( if ( = p 1 ) 0 1 ) x1 ( + 75 y1 ) x2 ( + 75 y1 )))
+        ( void )
+        ) ;fin ( if ( < counter 8 )
+   ) ;fin funcion Board                                                                                         ; fin funcion para el tablero
+
+( define ( Fichas counterFichas counterX counterY )                                                             ; inicio funcon de las fichas
+   ( if ( = counterX 8 )
+        ( Fichas counterFichas 0 ( + 1 counterY ) )
+        ;else
+   ( begin
+      ( if ( = counterFichas 65 )
+        ( void )
+        ( begin
+                  ( if ( or ( = counterFichas 1 ) ( = counterFichas 8 ))
+                       ((( draw-pixmap-posn "torreNegra.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 2 ) ( = counterFichas 7 ))
+                       ((( draw-pixmap-posn "caballoNegro.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 3 ) ( = counterFichas 6 ))
+                       ((( draw-pixmap-posn "alfilNegro.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( = counterFichas 4 )
+                       ((( draw-pixmap-posn "reinaNegra.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( = counterFichas 5 )
+                       ((( draw-pixmap-posn "reyNegro.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 9 ) ( = counterFichas 10 ) ( = counterFichas 11 ) ( = counterFichas 12 ) ( = counterFichas 13 ) ( = counterFichas 14 ) ( = counterFichas 15 ) ( = counterFichas 16 ))
+                       ((( draw-pixmap-posn "peonNegro.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 49 ) ( = counterFichas 50 ) ( = counterFichas 51 ) ( = counterFichas 52 ) ( = counterFichas 53 ) ( = counterFichas 54 ) ( = counterFichas 55 ) ( = counterFichas 56 )) 
+                       ((( draw-pixmap-posn "peonBlanco.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 57 ) ( = counterFichas 64 ))
+                       ((( draw-pixmap-posn "torreBlanca.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 58 ) ( = counterFichas 63 ))
+                       ((( draw-pixmap-posn "caballoBlanco.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( or ( = counterFichas 59 ) ( = counterFichas 62 ))
+                       ((( draw-pixmap-posn "alfilBlanco.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( = counterFichas 60 )
+                       ((( draw-pixmap-posn "reinaBlanca.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                  ( if ( = counterFichas 61 )
+                       ((( draw-pixmap-posn "reyBlanco.png" ) tablero ) ( make-posn ( * 75 counterX ) ( * 75 counterY )))
+                       ( void )))))))))))))
+              ( Fichas ( + 1 counterFichas ) ( + 1 counterX ) counterY )))))
+   ) ;fin funcion Fichas                                                                                                          ;fin funcion para las fichas
+
+( define strTable "T1C1A1DNRNA2C2T2P1P2P3P4P5P6P7P8&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&p1p2p3p4p5p6p7p8t1c1a1dbrba2c2t2$$$$$$$$" ) ;string para las fichas
+
+
+( define ( ChangeChar str1 pos char )                                                                                  ;inicio parte para cambiar posiciones del string
+( string-append ( substring str1 0 ( * 2 pos )) char ( substring str1 (+ 2 ( * 2 pos )))))
+
+( define ( ChangePosition str pos1 pos2 )
+   ( define c1 ( ChangeChar str ( - pos2 1 ) ( string-append ( string ( string-ref str ( * ( - pos1 1 ) 2 ))) ( string ( string-ref str ( + 1 ( * ( - pos1 1 ) 2 )))))))
+   ( ChangeChar c1 ( - pos1 1 ) "&&" )
+) ;fin funcion ChangePositions                                                                                      ;fin parte para cambiar posiciones del string
+
+( define ( FindString str x y )                                                                               
+   ( string-append ( string ( string-ref str ( * 2 ( + x ( * y 8 )))))                    ;funcion para encontrar el string en una coordenada
+                   ( string ( string-ref str ( + 1 ( * 2 ( + x ( * y 8 )))))))
+   ) ;fin funcion FindString
+
+( define ( Blocks casilla x y )
+   ( if ( = ( remainder y 2 ) 0 )
+        ( if ( = ( remainder casilla 2 ) 0 )                      ;funcion para poner un bloque de un color dependiendo de la casilla
+            "gray" 
+             ;else
+            "white" )
+        ;else
+        ( if ( = ( remainder casilla 2 ) 1 )
+             "gray"
+             ;else
+             "white" ))
+   ) ;fin funcion Blocks
+
+( define ( BadPlay x )
+   (( draw-solid-rectangle tablero ) ( make-posn 650 50 ) 200 70 "white" )
+   ((draw-string tablero ) (make-posn 700 90 ) ( if ( = x 1 )
+                                                    "Casilla invalida"
+                                                    ( if ( = x 2 )
+                                                         "No es tu turno" (void))))               ;funcion que dice los errores
+   ( sleep 1 )
+   (( draw-solid-rectangle tablero ) ( make-posn 650 50 ) 200 70 "sienna" )
+   );fin funcion BadPlay
+
+( define ( StrCasilla str x )
+   ( string-append ( string ( string-ref str ( - ( * 2 x ) 2 ))) ( string ( string-ref str ( - ( * 2 x ) 1 ))))  ;funcion para encontrar el string con una casilla
+   ) ;fin funcion para encontrar el string con una casilla
+
+( define ( CaminoTorre str counter x1 x2 y1 y2 )                                                  ;inicio restricciones fichas
+   ( if ( and ( = y1 y2 )
+              ( > x2 x1 ))
+        ( if ( = counter ( - x2 x1 ))
+             #t
+             ( if ( string=? ( FindString str ( + counter x1 ) y2 ) "&&" )
+                  ( CaminoTorre str ( + counter 1 ) x1 x2 y1 y2 )
+                  #f ))
+    ( if ( and ( = y1 y2 )
+               ( > x1 x2 ))
+         ( if ( = counter ( - x1 x2 ))
+              #t
+              ( if ( string=? ( FindString str ( + counter x2 ) y2 ) "&&" )
+                   ( CaminoTorre str ( + counter 1 ) x1 x2 y1 y2 )
+                   #f ))
+    ( if ( and ( > y1 y2 )
+               ( = x1 x2 ))
+         ( if ( = counter ( - y1 y2 ))
+              #t
+              ( if ( string=? ( FindString str x2 ( + counter y2 )) "&&" )
+                   ( CaminoTorre str ( + counter 1 ) x1 x2 y1 y2 )
+                   #f ))
+    ( if ( and ( > y2 y1 )
+               ( = x1 x2 ))
+         ( if ( = counter ( - y2 y1 ))
+              #t
+              ( if ( string=? ( FindString str x2 ( + counter y1 )) "&&" )
+                   ( CaminoTorre str ( + counter 1 ) x1 x2 y1 y2 )
+                   #f ))
+         void ))))
+   ) ;fin funcion CaminoTorre
+
+( define ( CaminoAlfil str counter x1 x2 y1 y2 )
+   ( if ( and ( = ( - y2 y1 ) ( - x2 x1 ))
+              ( > y2 y1 ))
+        ( if ( = counter ( - y2 y1 ))
+             #t
+             ( if ( string=? ( FindString str ( + counter x1 ) ( + counter y1 )) "&&" )
+                  ( CaminoAlfil str ( + counter 1 ) x1 x2 y1 y2 )
+                  #f ))
+   ( if ( and ( = ( - y2 y1 ) ( - x2 x1 ))
+              ( > y1 y2 ))
+         ( if ( = counter ( - y1 y2 ))
+             #t
+             ( if ( string=? ( FindString str ( - x1 counter ) ( - y1 counter )) "&&" )
+                  ( CaminoAlfil str ( + counter 1 ) x1 x2 y1 y2 )
+                  #f ))
+   ( if ( and ( = ( - y2 y1 ) ( - x1 x2 ))
+              { > y2 y1 })
+        ( if ( = counter ( - y2 y1 ))
+             #t
+             ( if ( string=? ( FindString str ( - x1 counter ) ( + y1 counter )) "&&" )
+                  ( CaminoAlfil str ( + counter 1 ) x1 x2 y1 y2 )
+                  #f ))
+   ( if ( and ( = ( - y2 y1 ) ( - x1 x2 ))
+              { > y1 y2 })
+        ( if ( = counter ( - y1 y2 ))
+             #t
+             ( if ( string=? ( FindString str ( + x1 counter ) ( - y1 counter )) "&&" )
+                  ( CaminoAlfil str ( + counter 1 ) x1 x2 y1 y2 )
+                  #f ))
+        void ))))
+   ) ;fin funcion CaminoAlfil
+
+( define ( PeonWhiteRestriction casilla1 casilla2 str x1 y1 x2 y2 )  ;restriccion peones
+   ( if ( or ( and ( = y2 ( - y1 1 )) ;jugada diagonal
+                   ( or ( = x2 ( + x1 1 ))
+                        ( = x2 ( - x1 1 )))
+                   ( not ( string=? "&&" ( FindString str x2 y2 ))))
+             
+             ( and ( = y1 6 ) ;jugada de 2 casillas en el inicio
+                   ( or ( and ( = y2 ( - y1 2 ))
+                              ( = x1 x2 ))
+                        ( and ( = y2 ( - y1 1 ))
+                              ( = x1 x2 )))
+                   ( string=? ( FindString str x2 y2 ) "&&" ))
+        
+        ( and ( = y2 ( - y1 1 )) ;movimiento normal del peon
+              ( = x1 x2 )
+              ( string=? ( FindString str x2 y2 ) "&&" )))
+   
+   ( begin
+      (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+      (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+      #t )             
+   #f )
+) ; fin restriccion peon blanco
+
+( define ( PeonBlackRestriction casilla1 casilla2 str x1 y1 x2 y2 )
+   ( if ( or ( and ( = y2 ( + y1 1 )) ;jugada diagonal
+                   ( or ( = x2 ( + x1 1 ))
+                        ( = x2 ( - x1 1 )))
+                   ( not ( string=? "&&" ( FindString str x2 y2 ))))
+             
+             ( and ( = y1 1 ) ;jugada de 2 casillas
+                   ( or ( and ( = y2 ( + y1 2 ))
+                              ( = x1 x2 ))
+                        ( and ( = y2 ( + y1 1 ))
+                              ( = x1 x2 )))
+                   ( string=? ( FindString str x2 y2 ) "&&" ))
+             ( and ( = y2 ( + y1 1 )) ;jugada normal peon
+                   ( = x1 x2 )
+                   ( string=? ( FindString str x2 y2 ) "&&" )))
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+           #t )
+        #f )
+   ) ;fin restriccion peon negro
+
+   
+( define ( TorreRestriction casilla1 casilla2 str x1 x2 y1 y2 )    ;restriccion torres
+   ( if ( and ( or ( = y1 y2 )
+                   ( = x1 x2 ))
+              ( CaminoTorre str 1 x1 x2 y1 y2 ))
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+           #t )
+        #f )
+   ); fin funcion TorreRestriction
+
+( define ( CaballoRestriction casilla1 casilla2 x1 x2 y1 y2 )     ;restriccion caballos
+   ( if ( or ( and ( or ( = y2 ( - y1 1 )) ( = y2 ( + y1 1 )))
+                   ( or ( = x2 ( + x1 2 )) ( = x2 ( - x1 2 ))))
+             ( and ( or ( = y2 ( - y1 2 )) ( = y2 ( + y1 2 )))
+                   ( or ( = x2 ( + x1 1 )) ( = x2 ( - x1 1 )))))      
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+           #t )
+        #f )
+   ) ;fin funcion CaballoRestriction
+
+( define ( AlfilRestriction casilla1 casilla2 str x1 x2 y1 y2 )        ;restriccion alfil
+   ( if ( and ( or ( = ( - y2 y1 ) ( - x2 x1 ))
+                   ( = ( - y2 y1 ) ( - x1 x2 )))
+              ( CaminoAlfil str 1 x1 x2 y1 y2 ))
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+           #t )
+        #f )
+   ) ;fin funcion AlfilRestriction
+
+( define ( ReinaRestriction casilla1 casilla2 str x1 x2 y1 y2 )          ;restriccion reina
+   ( if ( and ( or ( = y1 y2 )
+                   ( = x1 x2 )
+                   ( = ( - y2 y1 ) ( - x2 x1 ))
+                   ( = ( - y2 y1 ) ( - x1 x2 )))
+              ( CaminoTorre str 1 x1 x2 y1 y2 )
+              ( CaminoAlfil str 1 x1 x2 y1 y2 ))
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+           #t )
+        #f )
+   ) ;fin funcion ReinaRestriction
+
+( define ( ReyRestriction casilla1 casilla2 x1 y1 x2 y2 )         ;restriccion rey
+   ( if ( or ( and ( = y1 y2 )
+                   ( or ( = x2 ( + 1 x1 )) ( = x2 ( - x1 1 ))))
+             ( and ( or ( = y2 ( - y1 1 )) ( = y2 ( + y1 1 )))
+                   ( or ( = x2 x1 ) ( = x2 ( - x1 1 )) ( = x2 ( + 1 x1 )))))
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x1 )( * 75 y1 )) 75 75 ( Blocks casilla1 ( * 75 x1 )( * 75 y1 )))
+           (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x2 )( * 75 y2 )) 75 75 ( Blocks casilla2 ( * 75 x2 )( * 75 y2 )))
+           #t )
+        #f )
+   ) ;fin funcion ReyRestriction                                                                                 ;fin restricciones fichas
+
+( define ( DecorationCoronation )                                                                      ;incicio funciones para coronacion de peones
+   (( draw-solid-rectangle tablero ) ( make-posn 650 50 ) 200 50 "white" )
+   (( draw-solid-rectangle tablero ) ( make-posn 650 100 ) 200 50 "white" )
+   (( draw-solid-rectangle tablero ) ( make-posn 650 150 ) 200 50 "white" )
+   (( draw-solid-rectangle tablero ) ( make-posn 650 200 ) 200 50 "white" )
+   (( draw-rectangle tablero ) ( make-posn 650 50 ) 200 50 )
+   (( draw-rectangle tablero ) ( make-posn 650 100 ) 200 50 )
+   (( draw-rectangle tablero ) ( make-posn 650 150 ) 200 50 )
+   (( draw-rectangle tablero ) ( make-posn 650 200 ) 200 50 )
+   ((draw-string tablero ) (make-posn 720 80 ) "Caballo" )
+   ((draw-string tablero ) (make-posn 720 130 ) "Reina" )
+   ((draw-string tablero ) (make-posn 720 180 ) "Torre" )
+   ((draw-string tablero ) (make-posn 720 230 ) "Alfil" ))
+
+( define ( PeonCoronation str x y casilla click counter turn ) 
+   ( define y1 ( quotient ( - ( posn-y ( mouse-click-posn click )) 50 )  50 ))
+   ( if ( = counter 1 )
+        str
+        ( if ( or ( or ( > ( posn-x ( mouse-click-posn click )) 850 ) ( < ( posn-x ( mouse-click-posn click )) 650 ))
+                  ( or ( > ( posn-y ( mouse-click-posn click )) 250 ) ( < ( posn-x ( mouse-click-posn click )) 50 )))
+             ( PeonCoronation str x y casilla ( get-mouse-click tablero ) 0 )
+             ( begin
+                (( draw-solid-rectangle tablero ) ( make-posn ( * 75 x )( * 75 y )) 75 75 ( Blocks casilla ( * 75 x )( * 75 y )))
+                (( draw-solid-rectangle tablero ) ( make-posn 650 50 ) 200 200 "sienna" )
+                (( draw-solid-rectangle tablero ) ( make-posn 650 375 ) 200 70 "white" )
+                (( draw-string tablero ) (make-posn 720 415 ) ( if ( = turn 1 ) "Turno: 2" "Turno 1" ))
+                ( if ( = turn 1 )
+                     ( if ( = y1 0 )
+                          ( begin
+                             ((( draw-pixmap-posn "caballoBlanco.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                             ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "c1" ) x y casilla click ( + counter 1 ) turn ))
+                          ( if ( = y1 1 )
+                               ( begin
+                                  ((( draw-pixmap-posn "reinaBlanca.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                                  ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "db" ) x y casilla click ( + counter 1 ) turn ))
+                               ( if ( = y1 2 )
+                                    ( begin
+                                       ((( draw-pixmap-posn "torreBlanca.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                                       ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "t1" ) x y casilla click ( + counter 1 ) turn ))
+                                    ( begin
+                                       ((( draw-pixmap-posn "alfilBlanco.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                                       ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "a1" ) x y casilla click ( + counter 1 ) turn )))))
+                     ( if ( = y1 0 )
+                          ( begin
+                             ((( draw-pixmap-posn "caballoNegro.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                             ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "C1" ) x y casilla click ( + counter 1 ) turn ))
+                          ( if ( = y1 1 )
+                               ( begin
+                                  ((( draw-pixmap-posn "reinaNegra.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                                  ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "DN" ) x y casilla click ( + counter 1 ) turn ))
+                               ( if ( = y1 2 )
+                                    ( begin
+                                       ((( draw-pixmap-posn "torreNegra.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                                       ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "T1" ) x y casilla click ( + counter 1 ) turn ))
+                                    ( begin
+                                       ((( draw-pixmap-posn "alfilNegro.png" ) tablero ) ( make-posn ( * 75 x ) ( * 75 y )))
+                                       ( PeonCoronation ( ChangeChar str ( - casilla 1 ) "A1" ) x y casilla click ( + counter 1 ) turn )))))))))
+        ) ;fin funcion PeonCoronation
+
+( define ( StrY str y )
+   ( substring str ( * 2 ( * y 8 )) ( + 16 ( * 2 ( * y 8 ))))
+   ) ;fin funcion para encontar el string de una coordenada en y
+
+( define ( BuscarPeon counter str )
+   ( if ( = counter ( string-length str ))
+        #f
+        ( if ( or ( string=? ( string ( string-ref str counter )) "p" )
+                  ( string=? ( string ( string-ref str counter )) "P" ))
+             ( begin
+                #t
+                counter )
+             ( BuscarPeon ( + 2 counter ) str ))) 
+   ) ;fin funcion BuscarPeon                                                                                            ;fin funciones para coronacion de peones
+
+
+
+
+
+( define ( BuscarRey str index )                                                                             ;inicio funciones para el jaque
+   ( if ( string=? ( string ( string-ref str index )) "t" )
+        ( / index 2 )
+        ( BuscarRey str ( + index 1 )))
+   ) ;fin funcion BuscarRey
+
+( define ( Jaque x1 y1 strCompleto strFicha )
+   ( define x2 ( - ( remainder ( BuscarRey strTable 0 ) 8 ) 1 ))
+   ( define y2 ( quotient ( BuscarRey strTable 0 ) 8 ))
+   ( if ( or ( and ( string=? strFicha "T" )
+                   ( TorreRestriction x1 x2 y1 y2 ))
+             ( and ( string=? strFicha "C" )
+                   ( CaballoRestriction x1 x2 y1 y2 ))
+             ( and ( string=? strFicha "A" )
+                   ( AlfilRestriction x1 x2 y1 y2 ))
+             ( and ( string=? strFicha "D" )
+                   ( ReinaRestriction x1 x2 y1 y2 ))
+             ( and ( string=? strFicha "R" )
+                   ( ReyRestriction x1 x2 y1 y2 ))
+             ( and ( string=? strFicha "P" )
+                   ( PeonBlackRestriction x1 x2 y1 y2 )))
+        #t
+        #f )
+   ) ;fin funcion que dice si el rey esta en jaque o no
+
+             
+             
+
+
+( define ( Game turn str mouse1 mouse2 anteriorX anteriorY )                                                                      ;inicio funcion para mover fichas
+   
+   ( define x1 ( quotient ( posn-x ( mouse-click-posn mouse1 )) 75 ))
+   ( define y1 ( quotient ( posn-y ( mouse-click-posn mouse1 )) 75 ))    ;se separan las coordenadas de los 2 clicks
+   ( define x2 ( quotient ( posn-x ( mouse-click-posn mouse2 )) 75 ))
+   ( define y2 ( quotient ( posn-y ( mouse-click-posn mouse2 )) 75 ))
+   
+   ( define casilla1 ( + ( * y1 8 ) ( + x1 1 )))
+   ( define casilla2 ( + ( * y2 8 ) ( + x2 1 )))
+   
+   ( define actualTable ( ChangePosition str casilla1 casilla2 ))
+
+   (( draw-solid-rectangle tablero ) ( make-posn 650 375 ) 200 70 "white" )
+   (( draw-string tablero ) (make-posn 720 415 ) ( if ( = turn 1 ) "Turno: 1" "Turno: 2" ))
+   
+   ( if ( and ( >= ( posn-x ( mouse-click-posn mouse1 )) 650 ) ( <= ( posn-x ( mouse-click-posn mouse1 )) 850 )             
+              ( >= ( posn-y ( mouse-click-posn mouse1 )) 475 ) ( <= ( posn-y ( mouse-click-posn mouse1 )) 545 ))
+        ( begin
+           (( draw-solid-rectangle tablero ) ( make-posn 0 0 ) 900 600 "black" )
+           ((draw-string tablero ) (make-posn 415 280 ) "FIN DEL JUEGO" "yellow" ))
+     
+        ( if ( Jaque anteriorX anteriorY str ( FindString str anteriorX anteriorY ))
+             ( printf "hola" )
+             
+   ( if ( or ( > x2 7 )
+             ( > x1 7 ))       ;restriccion de tablero
+        ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY )
+
+   ( begin
+      ( if ( = turn  1 )
+        ( if ( or ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "p" )
+                  ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "t" )
+                  ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "c" )
+                  ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "a" )
+                  ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "d" )
+                  ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "r" ))
+             ( if ( and ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "p" ))
+                        ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "t" ))
+                        ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "c" ))
+                        ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "a" ))
+                        ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "d" ))
+                        ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "r" )))
+   ( begin
+      ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "p" )
+                 ( PeonWhiteRestriction casilla1 casilla2 str x1 y1 x2 y2 ))
+           ( if ( BuscarPeon 0 ( StrY actualTable 0 ))
+                ( begin
+                   ((( draw-pixmap-posn "peonBlanco.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+                   ( DecorationCoronation )
+                   ( Game ( if ( = turn 1 ) 2 1 )
+                                 ( PeonCoronation actualTable x2 y2 casilla2 ( get-mouse-click tablero ) 0 1 )
+                                 ( get-mouse-click tablero ) ( get-mouse-click tablero ) x2 y2 ))
+                ((( draw-pixmap-posn "peonBlanco.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 ))))
+        ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "t" )
+              ( TorreRestriction casilla1 casilla2 str x1 x2 y1 y2 ))
+              ((( draw-pixmap-posn "torreBlanca.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "c" )
+              ( CaballoRestriction casilla1 casilla2 x1 x2 y1 y2 ))
+            ((( draw-pixmap-posn "caballoBlanco.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "a" )
+              ( AlfilRestriction casilla1 casilla2 str x1 x2 y1 y2 ))
+            ((( draw-pixmap-posn "alfilBlanco.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( FindString str x1 y1 ) "rb" )
+              ( ReyRestriction casilla1 casilla2 x1 y1 x2 y2 ))
+            ((( draw-pixmap-posn "reyBlanco.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( FindString str x1 y1 ) "db" )
+              ( ReinaRestriction casilla1 casilla2 str x1 x2 y1 y2 ))
+            ((( draw-pixmap-posn "reinaBlanca.png" ) tablero ) ( make-posn (* 75 x2 ) ( * 75 y2 )))
+            ;else
+            ( begin
+               ( BadPlay 1 )
+               ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY ))))))))
+   (( draw-solid-rectangle tablero ) ( make-posn 650 375 ) 200 70 "white" )
+   ((draw-string tablero ) (make-posn 720 415 ) ( if ( = turn 1 ) "Turno: 2" "Turno: 1")))
+   ;else ( if ( not ( string=? 
+   ( begin
+      ( BadPlay 1 )
+      ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY ))) ;fin ( if ( not ( string=? 
+   ;else ( if ( string=? 
+    ( begin
+      ( BadPlay 2 )
+      ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY ))) ;fin ( if ( string=? 
+        
+        ;else ( if ( = turn  1 )
+
+   ( if ( or ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "P" )
+             ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "T" )
+             ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "C" )
+             ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "A" )
+             ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "D" )
+             ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "R" ))
+        ( if ( and ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "P" ))
+                  ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "T" ))
+                  ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "C" ))
+                  ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "A" ))
+                  ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "D" ))
+                  ( not ( string=? ( string ( string-ref ( FindString str x2 y2 ) 0 )) "R" )))
+   ( begin         
+      ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "P" )
+                 ( PeonBlackRestriction casilla1 casilla2 str x1 y1 x2 y2 ))
+           ( if ( BuscarPeon 0 ( StrY actualTable 7 ))
+                ( begin
+                   ((( draw-pixmap-posn "peonNegro.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+                   ( DecorationCoronation )
+                   ( Game ( if ( = turn 1 ) 2 1 )
+                                 ( PeonCoronation actualTable x2 y2 casilla2 ( get-mouse-click tablero ) 0 1 )
+                                 ( get-mouse-click tablero ) ( get-mouse-click tablero ) x2 y2 ))
+                ((( draw-pixmap-posn "peonNegro.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 ))))
+        ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "T" )
+              ( TorreRestriction casilla1 casilla2 str x1 x2 y1 y2 ))
+              ((( draw-pixmap-posn "torreNegra.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "C" )
+              ( CaballoRestriction casilla1 casilla2 x1 x2 y1 y2 ))
+            ((( draw-pixmap-posn "caballoNegro.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( string ( string-ref ( FindString str x1 y1 ) 0 )) "A" )
+              ( AlfilRestriction casilla1 casilla2 str x1 x2 y1 y2 ))
+            ((( draw-pixmap-posn "alfilNegro.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( FindString str x1 y1 ) "RN" )
+              ( ReyRestriction casilla1 casilla2 x1 y1 x2 y2 ))
+            ((( draw-pixmap-posn "reyNegro.png" ) tablero ) ( make-posn ( * 75 x2 ) ( * 75 y2 )))
+   ( if ( and ( string=? ( FindString str x1 y1 ) "DN" )
+              ( ReinaRestriction casilla1 casilla2 str x1 x2 y1 y2 ))
+            ((( draw-pixmap-posn "reinaNegra.png" ) tablero ) ( make-posn (* 75 x2 ) ( * 75 y2 )))
+            ;else
+            ( begin
+               ( BadPlay 1 )
+               ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY ))))))))
+      (( draw-solid-rectangle tablero ) ( make-posn 650 375 ) 200 70 "white" )
+      ((draw-string tablero ) (make-posn 720 415 ) ( if ( = turn 1 ) "Turno: 2" "Turno: 1"))) ;fin begin
+   ;else ( if ( not ( string=? 
+   ( begin
+      ( BadPlay 1 )
+      ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY ))) ;fin ( if ( not ( string=? 
+   ;else ( if ( string=? 
+    ( begin
+      ( BadPlay 2 )
+      ( Game turn str ( get-mouse-click tablero ) ( get-mouse-click tablero ) anteriorX anteriorY ))
+   ) ;fin ( if ( string=?
+   ) ;fin ( = turn  1 )
+   ( Game ( if ( = turn 1 ) 2 1 ) actualTable ( get-mouse-click tablero ) ( get-mouse-click tablero ) x2 y2 ))
+   ) ;fin ( > x1ox2 8 )
+   ) ;fin jaque
+   ) ;final fin del juego
+) ;fin funcion MoverFichas
+
+
+(( draw-solid-rectangle tablero ) ( make-posn 600 0 ) 300 600 "sienna" )
+(( draw-solid-rectangle tablero ) ( make-posn 650 375 ) 200 70 "white" )
+(( draw-solid-rectangle tablero ) ( make-posn 650 475 ) 200 70 "black" )
+((draw-string tablero ) (make-posn 710 515 ) "Fin del juego" "red" )
+((draw-string tablero ) (make-posn 720 415 ) "Turno:1" "black" )
+( Board 0 1 75 0 0 75 )
+( Fichas 1 0 0 )
+( Game 1 strTable ( get-mouse-click tablero ) ( get-mouse-click tablero ) 0 0 )
+
+
+                            
+                            
+             
+   
+
+
+
+
+   
+
+
+
+             
+                 
+       
+            
+ 
+                 
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
